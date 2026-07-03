@@ -11,7 +11,8 @@ COVERAGES = config["coverages"]
 rule all:
     input:
         "evaluation/output/n50_vs_coverage.png",
-        "evaluation/output/largest_contig_vs_coverage.png"
+        "evaluation/output/largest_contig_vs_coverage.png",
+        expand("evaluation/output/coverage_{cov}/subsample_stats.txt", cov=COVERAGES)
 
 
 # -------------------------------------------------------------------
@@ -88,10 +89,25 @@ rule read_subsample_stats:
                 total_reads += 1
                 total_bases += len(s.strip())
 
+        # read length distribution
+        read_lengths = []
+        with open(input.fq) as f:
+            while True:
+                h = f.readline()
+                if not h:
+                    break
+                s = f.readline()
+                sep = f.readline()
+                q = f.readline()
+                if not q:
+                    break
+                read_lengths.append(len(s.strip()))
+
         os.makedirs(os.path.dirname(output.stats), exist_ok=True)
         with open(output.stats, "w") as f:
             f.write(f"Total reads: {total_reads}\n")
             f.write(f"Total bases: {total_bases}\n")
+            f.write(f"Read lengths: {read_lengths}\n")
 
 # -------------------------------------------------------------------
 # Assemble with Ilesta
