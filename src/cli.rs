@@ -97,6 +97,10 @@ pub struct AlignmentFilteringArgs {
     /// Overhang ratio
     #[arg(long, default_value_t = 0.8)]
     pub overhang_ratio: f32,
+
+    /// Optional random seed for reproducible results
+    #[arg(long)]
+    pub seed: Option<u64>,
 }
 
 impl From<&AlignmentFilteringArgs> for crate::configs::AlignmentFilteringConfig {
@@ -109,6 +113,7 @@ impl From<&AlignmentFilteringArgs> for crate::configs::AlignmentFilteringConfig 
             min_overlap_count: args.min_overlap_count,
             min_percent_identity: args.min_percent_identity,
             overhang_ratio: args.overhang_ratio,
+            seed: args.seed,
         }
     }
 }
@@ -214,6 +219,10 @@ pub struct AssembleArgs {
     /// Minimum identity for a completion bridge
     #[arg(long, default_value_t = 0.8f64, help_heading = "Assembly")]
     pub completion_min_identity: f64,
+
+    /// Optional random seed for reproducible results
+    #[arg(long, help_heading = "Assembly")]
+    pub seed: Option<u64>,
 }
 
 impl From<&AssembleArgs> for crate::configs::AssembleConfig {
@@ -249,6 +258,7 @@ impl From<&AssembleArgs> for crate::configs::AssembleConfig {
             completion_rounds: args.completion_rounds,
             completion_min_alignment_len: args.completion_min_alignment_len,
             completion_min_identity: args.completion_min_identity,
+            seed: args.seed,
         }
     }
 }

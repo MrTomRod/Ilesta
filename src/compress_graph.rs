@@ -226,7 +226,9 @@ pub fn compress_unitigs(
     };
 
     // 2) non-circular unitigs, start unitigs at nodes where indegree != 1 || outdeg != 1
-    for (id, node) in &graph.nodes {
+    let node_ids = crate::utils::order_keys(graph.nodes.keys().cloned());
+    for id in &node_ids {
+        let node = &graph.nodes[id];
         let indegree_i = *indegree.get(id).unwrap_or(&0);
         let outdeg_i = node.edges.len();
 
@@ -309,7 +311,8 @@ pub fn compress_unitigs(
     }
 
     // 3) circular unitigs, handle remaining nodes that are still unvisited
-    for id in graph.nodes.keys() {
+    let circular_ids = crate::utils::order_keys(graph.nodes.keys().cloned());
+    for id in &circular_ids {
         if visited.contains(id) {
             continue;
         }

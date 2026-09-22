@@ -19,6 +19,7 @@ pub struct AlignmentFilteringConfig {
     pub min_overlap_count: u32,
     pub min_percent_identity: f32,
     pub overhang_ratio: f32,
+    pub seed: Option<u64>,
 }
 
 pub struct AssembleConfig {
@@ -52,4 +53,5 @@ pub struct AssembleConfig {
     pub completion_rounds: u32,
     pub completion_min_alignment_len: u32,
     pub completion_min_identity: f64,
+    pub seed: Option<u64>,
 }

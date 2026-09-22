@@ -53,6 +53,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         Commands::AlignmentFiltering(args) => {
             let config: crate::configs::AlignmentFilteringConfig = args.into();
+            crate::utils::set_seed(config.seed);
 
             let out_dir = std::path::Path::new(&config.output_dir);
             std::fs::create_dir_all(out_dir)?;
@@ -72,6 +73,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         Commands::Assemble(args) => {
             let config: crate::configs::AssembleConfig = args.into();
+            crate::utils::set_seed(config.seed);
 
             // ensure output directory exists
             let out_dir = std::path::Path::new(&config.output_dir);
@@ -188,7 +190,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
                 let small_comp_count = comp_nodes_to_remove.len();
-                for node_id in comp_nodes_to_remove.iter() {
+                let comp_nodes_vec = crate::utils::order_keys(comp_nodes_to_remove);
+                for node_id in comp_nodes_vec.iter() {
                     graph.nodes.remove(node_id.as_str());
                     if node_id.ends_with('+') {
                         let rc = node_id[..node_id.len() - 1].to_string() + "-";
