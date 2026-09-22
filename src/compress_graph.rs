@@ -512,8 +512,8 @@ fn load_fastq_sequences(
 ) -> Result<HashMap<String, String>, String> {
     let mut seq_map: HashMap<String, String> = HashMap::new();
 
-    let reader = match std::fs::File::open(fastq_path) {
-        Ok(f) => f,
+    let reader = match crate::utils::open_fastq_reader(fastq_path) {
+        Ok(r) => r,
         Err(e) => {
             return Err(format!(
                 "failed to open FASTQ file '{}': {}",
@@ -522,8 +522,7 @@ fn load_fastq_sequences(
             ));
         }
     };
-    let buf_reader = std::io::BufReader::new(reader);
-    let mut lines = buf_reader.lines();
+    let mut lines = reader.lines();
 
     while let Some(Ok(header)) = lines.next() {
         if !header.starts_with('@') {

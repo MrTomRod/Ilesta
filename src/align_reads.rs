@@ -20,8 +20,7 @@ fn filter_fastq(
     min_q: f32,
 ) -> std::io::Result<Vec<ReadStats>> {
     // read the file
-    let file = File::open(input_path)?;
-    let reader = BufReader::new(file);
+    let reader = crate::utils::open_fastq_reader(input_path)?;
 
     let output = File::create(output_path)?;
     let mut writer = BufWriter::new(output);
@@ -121,8 +120,7 @@ fn subsample_fastq(
         total_len
     );
 
-    let file = File::open(input_path)?;
-    let reader = BufReader::new(file);
+    let reader = crate::utils::open_fastq_reader(input_path)?;
 
     let output = File::create(output_path)?;
     let mut writer = BufWriter::new(output);
