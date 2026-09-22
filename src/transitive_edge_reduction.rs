@@ -135,6 +135,10 @@ pub fn reduce_transitive_edges(g: &mut OverlapGraph, fuzz: u32) {
         }
     }
 
+    if utils::has_seed() {
+        edges_to_remove.sort_unstable();
+    }
+
     // Now remove all edges in a separate pass
     for (from, to) in edges_to_remove {
         if let Some(node) = g.nodes.get_mut(&from) {

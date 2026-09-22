@@ -478,6 +478,10 @@ pub fn compress_unitigs(
     // remove edges touching dropped unitigs
     edges.retain(|e| keep.contains(&e.from) && keep.contains(&e.to));
 
+    if utils::has_seed() {
+        edges.sort_unstable_by_key(|edge| (edge.from, edge.to, edge.from_ori, edge.to_ori));
+    }
+
     // load fastq sequences
     println!("Loading FASTQ sequences from {}...", fastq_path.display());
     let fastq_seqs = load_fastq_sequences(fastq_path).unwrap();

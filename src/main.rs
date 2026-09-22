@@ -311,3 +311,110 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::BTreeMap;
+
+    fn fixture_overlaps(reverse: bool) -> HashMap<(usize, usize), Overlap> {
+        let mut pairs = vec![(0, 2), (1, 2), (2, 5), (0, 5), (1, 5), (3, 5), (4, 5)];
+        if reverse {
+            pairs.reverse();
+        }
+        pairs
+            .into_iter()
+            .map(|(source, target)| {
+                let overlap = Overlap {
+                    source_name: format!("read{}:0-8+", source),
+                    sink_name: format!("read{}:0-8+", target),
+                    rc_source_name: format!("read{}:0-8-", target),
+                    rc_sink_name: format!("read{}:0-8-", source),
+                    edge_len: if source < 2 && target == 5 { 2 } else { 1 },
+                    rc_edge_len: 1,
+                    overlap_len: 6,
+                    identity: 99.0,
+                };
+                ((source, target), overlap)
+            })
+            .collect()
+    }
+
+    #[test]
+    fn seeded_outputs_are_reproducible() {
+        let directory = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("target")
+            .join(format!("seeded_reproducibility_{}", std::process::id()));
+        std::fs::create_dir_all(&directory).unwrap();
+        let fastq_path = directory.join("reads.fq");
+        let fasta_path = directory.join("unitigs.fa");
+        let gfa_path = directory.join("unitigs.gfa");
+        let dot_path = directory.join("graph.dot");
+        let overlaps_path = directory.join("overlaps.bin");
+        let fastq: String = (0..6)
+            .map(|read_id| format!("@read{read_id}\nACGTACGT\n+\nIIIIIIII\n"))
+            .collect();
+        std::fs::write(&fastq_path, fastq).unwrap();
+
+        for seed in [0, 42] {
+            utils::set_seed(Some(seed));
+            let mut expected = None;
+            for attempt in 0..32 {
+                let output = alignment_filtering::AlignmentFilteringOutput {
+                    overlaps: fixture_overlaps(attempt % 2 != 0),
+                };
+                output.serialize_overlaps(overlaps_path.to_str().unwrap()).unwrap();
+                let overlap_bytes = std::fs::read(&overlaps_path).unwrap();
+                let overlaps: HashMap<(usize, usize), Overlap> =
+                    bincode::deserialize(&overlap_bytes).unwrap();
+                let original: BTreeMap<_, _> = output.overlaps.iter().collect();
+                let decoded: BTreeMap<_, _> = overlaps.iter().collect();
+                assert_eq!(
+                    bincode::serialize(&original).unwrap(),
+                    bincode::serialize(&decoded).unwrap()
+                );
+                let mut graph = create_overlap_graph::run_create_overlap_graph(&overlaps).unwrap();
+                transitive_edge_reduction::reduce_transitive_edges(&mut graph, 0);
+                let remaining = &graph.nodes["read5:0-8-"].edges;
+                assert_eq!(remaining.len(), 3);
+                assert!(remaining.iter().all(|edge| {
+                    edge.target_id != "read0:0-8-" && edge.target_id != "read1:0-8-"
+                }));
+                let snapshot: BTreeMap<_, _> = graph
+                    .nodes
+                    .iter()
+                    .map(|(node_id, node)| {
+                        let edges: Vec<_> = node
+                            .edges
+                            .iter()
+                            .map(|edge| (edge.target_id.clone(), edge.edge_len))
+                            .collect();
+                        (node_id.clone(), edges)
+                    })
+                    .collect();
+                heuristic_simplification::remove_multi_edges(&mut graph);
+                heuristic_simplification::remove_short_edges(&mut graph, 0.8);
+                bubble_removal::remove_bubbles(&mut graph, 100, 1.1);
+                graph.write_dot(&dot_path).unwrap();
+                let mut compressed =
+                    compress_graph::compress_unitigs(&graph, &fastq_path, &fasta_path);
+                assert!(compressed.edges.len() >= 2);
+                compressed.write_gfa(gfa_path.to_str().unwrap(), &overlaps).unwrap();
+                let result = (
+                    snapshot,
+                    overlap_bytes,
+                    std::fs::read(&fasta_path).unwrap(),
+                    std::fs::read(&gfa_path).unwrap(),
+                    std::fs::read(&dot_path).unwrap(),
+                );
+                if let Some(expected) = &expected {
+                    assert_eq!(&result, expected, "seed {seed}, attempt {attempt}");
+                } else {
+                    expected = Some(result);
+                }
+            }
+        }
+        utils::set_seed(None);
+        std::fs::remove_dir_all(directory).unwrap();
+    }
+}
