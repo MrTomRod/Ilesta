@@ -48,6 +48,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 config.min_read_length,
                 config.min_base_quality,
                 config.genome_size,
+                config.read_type,
             )?;
         }
 
@@ -96,6 +97,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 config.min_read_length,
                 config.min_base_quality,
                 config.genome_size,
+                config.read_type,
             )?;
             println!("=== READ FILTERING AND ALIGNMENT COMPLETE ===");
 
@@ -243,6 +245,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         config.completion_min_alignment_len,
                         config.completion_min_identity,
                         config.threads,
+                        config.read_type,
                     )?;
                     if completion.is_empty() {
                         println!("No completion bridges were added.");

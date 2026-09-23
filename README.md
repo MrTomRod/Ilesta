@@ -115,6 +115,8 @@ Output:
 Read filtering and alignment:
   -r, --reads-fq <READS_FQ>
           Read filtering and alignment parameters Input reads in FASTQ format
+      --read-type <READ_TYPE>
+          Read type / sequencing technology (ont, pb-clr, pb-hifi) [default: ont] [possible values: ont, pb-clr, pb-hifi]
   -t, --threads <THREADS>
           Number of threads [default: 4]
   -a, --paf <PAF>

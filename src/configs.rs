@@ -1,3 +1,5 @@
+use crate::cli::ReadType;
+
 pub struct AlignReadsConfig {
     // output
     pub output_dir: String,
@@ -9,6 +11,7 @@ pub struct AlignReadsConfig {
     pub min_read_length: u32,
     pub min_base_quality: f32,
     pub genome_size: Option<u32>,
+    pub read_type: ReadType,
 }
 
 pub struct AlignmentFilteringConfig {
@@ -34,6 +37,7 @@ pub struct AssembleConfig {
     pub min_read_length: u32,
     pub min_base_quality: f32,
     pub genome_size: Option<u32>,
+    pub read_type: ReadType,
 
     // alignment filtering
     pub min_overlap_length: u32,
